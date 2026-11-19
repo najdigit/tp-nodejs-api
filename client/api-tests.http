@@ -1,0 +1,18 @@
+### Obtenir tous les posts
+GET http://localhost:3000/api/posts
+
+### Obtenir un post spécifique (le numéro 1)
+GET http://localhost:3000/api/posts/1
+
+### Créer un nouveau post
+POST http://localhost:3000/api/posts
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "title": "Mon nouveau post",
+  "body": "Ceci est le contenu de mon nouveau post créé via l'API"
+}
+
+### Supprimer un post (le numéro 103, celui qu'on vient de créer)
+DELETE http://localhost:3000/api/posts/103

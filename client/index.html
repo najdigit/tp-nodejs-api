@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <title>TP Node.js - Posts</title>
+        <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    .post { border: 1px solid #ddd; padding: 1rem; margin: .5rem 0; border-radius: 6px; background: #f9f9f9; }
+    .post h3 { margin: 0 0 .5rem; color: #333; }
+    form { display: grid; gap: .5rem; margin-bottom: 1.5rem; background: #f0f0f0; padding: 1rem; border-radius: 6px; }
+    input, textarea, button { padding: .5rem; font: inherit; border: 1px solid #ccc; border-radius: 4px; }
+    button { cursor: pointer; background: #007bff; color: white; border: none; }
+    button:hover { background: #0056b3; }
+    .actions button { background: #dc3545; margin-right: .5rem; }
+    .actions button:hover { background: #a71d2a; }
+  </style>
+    </head>
+    <body>
+        <h1>📝 Mes posts</h1>
+
+        <!-- Formulaire pour créer un post (méthode POST) -->
+        <h2>Créer un post</h2>
+        <form id="post-form">
+            <input type="text" id="title" placeholder="Titre" required />
+            <textarea id="body" placeholder="Contenu" required></textarea>
+            <button type="submit">Créer le post</button>
+        </form>
+
+        <!-- Zone où les posts vont s'afficher (méthode GET) -->
+        <h2>Liste des posts</h2>
+        <div id="posts">Chargement…</div>
+
+        <script>
+    // L'adresse de notre API Node.js
+    const API = 'http://localhost:3000/api/posts';
+    const postsContainer = document.getElementById('posts');
+
+    // 1. Lire et afficher les posts
+    async function loadPosts() {
+      postsContainer.textContent = 'Chargement…';
+      try {
+        const res = await fetch(API);
+        const posts = await res.json();
+        if (!posts.length) {
+          postsContainer.textContent = 'Aucun post.';
+          return;
+        }
+        
+        // On affiche seulement les 15 premiers pour ne pas surcharger la page
+        postsContainer.innerHTML = posts
+          //.slice(0, 15) 
+          .map(
+            (p) => `
+            <div class="post">
+              <h3>#${p.id} — ${escapeHtml(p.title)}</h3>
+              <p>${escapeHtml(p.body)}</p>
+              <div class="actions">
+                <button onclick="deletePost(${p.id})">🗑 Supprimer</button>
+              </div>
+            </div>`
+          )
+          .join('');
+      } catch (err) {
+        postsContainer.textContent = "Erreur : impossible de contacter l'API. Le serveur est-il lancé ?";
+      }
+    }
+
+    // 2. Créer un post
+    document.getElementById('post-form').addEventListener('submit', async (e) => {
+      e.preventDefault(); // Empêche le rechargement de la page
+      const title = document.getElementById('title').value;
+      const body = document.getElementById('body').value;
+      
+      await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: 1, title, body }),
+      });
+      
+      e.target.reset(); // Vide le formulaire
+      loadPosts(); // Recharge la liste pour voir le nouveau post
+    });
+
+    // 3. Supprimer un post
+    async function deletePost(id) {
+      if (confirm("Voulez-vous vraiment supprimer ce post ?")) {
+        await fetch(`${API}/${id}`, { method: 'DELETE' });
+        loadPosts(); // Recharge la liste
+      }
+    }
+
+    // Sécurité basique pour éviter les injections de code HTML
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    // Lancer la lecture des posts dès l'ouverture de la page
+    loadPosts();
+  </script>
+    </body>
+</html>
